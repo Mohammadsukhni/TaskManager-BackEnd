@@ -1,6 +1,7 @@
 ﻿using TaskManager.Core.Dto;
 using TaskManager.Core.Entities;
 using TaskManager.Core.Enum;
+using TaskManager.Core.Exceptions;
 using TaskManager.Core.Helper;
 using TaskManager.Core.IRepositories;
 using TaskManager.Core.IService;
@@ -25,14 +26,50 @@ namespace TaskManager.Infrastructure.Service
                 ReferenceNumberHelper.GenerateProjectReference();
 
             await _unitOfWork.Projects.CreateAsync(project);
-            await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task<IReadOnlyList<ProjectDto>> GetAllProjectsAsync()
+        public async Task<PagedResultDto<ProjectDto>> GetAllProjectsAsync(
+            int pageNumber,
+            int pageSize)
         {
-            var projects = await _unitOfWork.Projects.GetAllAsync();
+            var projects = await _unitOfWork.Projects.GetPagedAsync(pageNumber, pageSize);
 
-            return projects.Select(x => x.ToDto()).ToList();
+            return projects.ToPagedDto(x => x.ToDto());
+        }
+
+        public async Task<ProjectFilterResultDto> FilterProjectsAsync(
+            string? search,
+            int pageNumber,
+            int pageSize)
+        {
+            var term = NormalizeSearch(search);
+
+            var projects = string.IsNullOrWhiteSpace(term)
+                ? await _unitOfWork.Projects.GetPagedAsync(pageNumber, pageSize)
+                : await _unitOfWork.Projects.GetPagedAsync(
+                    x => x.Name.Contains(term) ||
+                         x.ReferenceNumber.Contains(term),
+                    pageNumber,
+                    pageSize);
+
+            var projectIds = projects.Items.Select(x => x.Id).ToList();
+
+            var sprints = projectIds.Count == 0
+                ? new List<Sprint>()
+                : await _unitOfWork.Sprints.GetAllAsync(x => projectIds.Contains(x.ProjectId));
+
+            var sprintIds = sprints.Select(x => x.Id).ToList();
+
+            var workItems = sprintIds.Count == 0
+                ? new List<WorkItem>()
+                : await _unitOfWork.WorkItems.GetAllAsync(x => sprintIds.Contains(x.SprintId));
+
+            return new ProjectFilterResultDto
+            {
+                Projects = projects.ToPagedDto(x => x.ToDto()),
+                Sprints = sprints.Select(x => x.ToDto()).ToList(),
+                WorkItems = workItems.Select(x => x.ToDto()).ToList()
+            };
         }
 
         public async Task<ProjectDto?> GetProjectByIdAsync(int id)
@@ -55,7 +92,6 @@ namespace TaskManager.Infrastructure.Service
             project.Name = dto.Name;
 
             _unitOfWork.Projects.Update(project);
-            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task DeleteProjectAsync(int id)
@@ -66,7 +102,6 @@ namespace TaskManager.Infrastructure.Service
                 return;
 
             _unitOfWork.Projects.Delete(project);
-            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task AssignUserToProjectAsync(int projectId, int userId)
@@ -75,16 +110,16 @@ namespace TaskManager.Infrastructure.Service
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
 
             if (project == null)
-                throw new InvalidOperationException("Project not found.");
+                throw new BadRequestException("Project not found.");
 
             if (user == null)
-                throw new InvalidOperationException("User not found.");
+                throw new BadRequestException("User not found.");
 
             if (user.UserRole != UserRole.User)
-                throw new InvalidOperationException("Only regular users can be assigned.");
+                throw new BadRequestException("Only regular users can be assigned.");
 
             if (!user.IsActive)
-                throw new InvalidOperationException("Cannot assign a deactivated user.");
+                throw new BadRequestException("Cannot assign a deactivated user.");
 
             var exists = (await _unitOfWork.UserProjects.GetAllAsync())
                 .Any(x => x.ProjectId == projectId &&
@@ -100,10 +135,12 @@ namespace TaskManager.Infrastructure.Service
             };
 
             await _unitOfWork.UserProjects.CreateAsync(userProject);
-            await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task<IReadOnlyList<ProjectDto>> GetUserProjectsAsync(int userId)
+        public async Task<PagedResultDto<ProjectDto>> GetUserProjectsAsync(
+            int userId,
+            int pageNumber,
+            int pageSize)
         {
             var userProjects = await _unitOfWork.UserProjects.GetAllAsync();
 
@@ -112,12 +149,17 @@ namespace TaskManager.Infrastructure.Service
                 .Select(x => x.ProjectId)
                 .ToList();
 
-            var projects = await _unitOfWork.Projects.GetAllAsync();
+            var projects = await _unitOfWork.Projects.GetPagedAsync(
+                x => projectIds.Contains(x.Id),
+                pageNumber,
+                pageSize);
 
-            return projects
-                .Where(x => projectIds.Contains(x.Id))
-                .Select(x => x.ToDto())
-                .ToList();
+            return projects.ToPagedDto(x => x.ToDto());
+        }
+
+        private static string NormalizeSearch(string? search)
+        {
+            return search?.Trim() ?? string.Empty;
         }
     }
 }

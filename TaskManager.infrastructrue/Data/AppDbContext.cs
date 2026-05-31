@@ -25,5 +25,6 @@ namespace TaskManager.Infrastructure.Data
         public DbSet<UserProject> UserProjects { get; set; }
         public DbSet<WorkItem> WorkItems { get; set; }
         public DbSet<WorkItemRelation> WorkItemRelations { get; set; }
+        public DbSet<Otp> Otps { get; set; }
     }
 }

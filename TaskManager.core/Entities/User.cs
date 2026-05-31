@@ -14,8 +14,7 @@ namespace TaskManager.Core.Entities
         public string Phone { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
         public UserRole UserRole { get; set; }
-        public string? OtpCode { get; set; }
-        public DateTime? OtpExpiration { get; set; }
+        public ICollection<Otp> Otps { get; set; } = new List<Otp>();
         public ICollection<UserProject> UserProjects { get; set; } = new List<UserProject>();
         public ICollection<WorkItem> WorkItems { get; set; } = new List<WorkItem>();
 

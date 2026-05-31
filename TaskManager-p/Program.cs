@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using TaskManager.Core.Exceptions;
 using TaskManager.Core.IService;
 using TaskManager.Infrastructure.Data;
 using TaskManager.Infrastructure.Repositories;
 using TaskManager.Infrastructure.Service;
+using TaskManager_p.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +27,10 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddSingleton<ILoginAttemptService, LoginAttemptService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddScoped<IUserService, UserServices>();
@@ -48,7 +54,7 @@ builder.Services.AddAuthentication(options =>
 .AddJwtBearer(options =>
 {
     var jwtKey = builder.Configuration["Jwt:Key"] ??
-                 throw new InvalidOperationException("Jwt:Key is missing.");
+                 throw new ConfigurationException("Jwt:Key is missing.");
 
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -81,6 +87,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("FrontendPolicy");
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+app.UseMiddleware<SaveChangesMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -105,16 +113,8 @@ static TimeZoneInfo GetJordanTimeZone()
 {
     foreach (var timeZoneId in new[] { "Jordan Standard Time", "Asia/Amman" })
     {
-        try
-        {
-            return TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
-        }
-        catch (TimeZoneNotFoundException)
-        {
-        }
-        catch (InvalidTimeZoneException)
-        {
-        }
+        if (TimeZoneInfo.TryFindSystemTimeZoneById(timeZoneId, out var timeZone))
+            return timeZone;
     }
 
     return TimeZoneInfo.Local;

@@ -10,9 +10,9 @@ namespace TaskManager.Core.Entities
         public bool IsDeleted { get; set; }=false;
         public bool IsActive { get; set; }=true;
         public DateTime CreatedDate { get; set; }=DateTime.Now;
-        public string CreatedBy { get; set; } = "System";
+        public int? CreatedById { get; set; }
         public DateTime? LastUpdatedDate { get; set; }
-        public string? LastUpdatedBy { get; set; }
+        public int? LastUpdatedById { get; set; }
     }
 }
  

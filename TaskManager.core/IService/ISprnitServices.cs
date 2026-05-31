@@ -8,10 +8,11 @@ namespace TaskManager.Core.IService
     public interface ISprintServices
     {
         Task CreateSprintAsync(SprintDto dto);
-        Task<IReadOnlyList<SprintDto>> GetAllSprintsAsync();
+        Task<PagedResultDto<SprintDto>> GetAllSprintsAsync(int pageNumber, int pageSize);
+        Task<SprintFilterResultDto> FilterSprintsAsync(string? search, int pageNumber, int pageSize);
         Task<SprintDto?> GetSprintByIdAsync(int id);
         Task UpdateSprintAsync(SprintDto dto);
         Task DeleteSprintAsync(int id);
-        Task<IReadOnlyList<SprintDto>> GetUserSprintsAsync(int userId);
+        Task<PagedResultDto<SprintDto>> GetUserSprintsAsync(int userId, int pageNumber, int pageSize);
     }
 }

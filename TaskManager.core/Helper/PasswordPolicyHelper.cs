@@ -1,4 +1,6 @@
-﻿namespace TaskManager.Core.Helper
+using TaskManager.Core.Exceptions;
+
+namespace TaskManager.Core.Helper
 {
     public static class PasswordPolicyHelper
     {
@@ -11,7 +13,7 @@
                 !password.Any(char.IsDigit) ||
                 !password.Any(ch => !char.IsLetterOrDigit(ch)))
             {
-                throw new Exception(
+                throw new BadRequestException(
                     "Password must be at least 8 characters and contain uppercase, lowercase, number, and special character");
             }
         }

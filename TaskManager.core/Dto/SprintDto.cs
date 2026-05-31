@@ -17,5 +17,9 @@ namespace TaskManager.Core.Dto
         public int ProjectId { get; set; }
 
         public string ReferenceNumber { get; set; } = string.Empty;
+
+        public int? CreatedById { get; set; }
+
+        public int? LastUpdatedById { get; set; }
     }
 }

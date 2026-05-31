@@ -63,16 +63,8 @@ namespace TaskManager.Infrastructure.Service
         {
             foreach (var timeZoneId in new[] { "Jordan Standard Time", "Asia/Amman" })
             {
-                try
-                {
-                    return TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
-                }
-                catch (TimeZoneNotFoundException)
-                {
-                }
-                catch (InvalidTimeZoneException)
-                {
-                }
+                if (TimeZoneInfo.TryFindSystemTimeZoneById(timeZoneId, out var timeZone))
+                    return timeZone;
             }
 
             return TimeZoneInfo.Local;

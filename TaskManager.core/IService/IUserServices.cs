@@ -2,7 +2,8 @@
 
 public interface IUserService
 {
-    Task<IReadOnlyList<UserDto>> GetAllUsersAsync();
+    Task<PagedResultDto<UserDto>> GetAllUsersAsync(int pageNumber, int pageSize);
+    Task<UserFilterResultDto> FilterUsersAsync(string? search, int pageNumber, int pageSize);
 
     Task<UserDto?> GetUserByIdAsync(int id);
 

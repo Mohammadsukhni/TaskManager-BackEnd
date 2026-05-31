@@ -7,7 +7,8 @@ namespace TaskManager.Core.IService
 {
     public interface IProjectServices
     {
-        Task<IReadOnlyList<ProjectDto>> GetAllProjectsAsync();
+        Task<PagedResultDto<ProjectDto>> GetAllProjectsAsync(int pageNumber, int pageSize);
+        Task<ProjectFilterResultDto> FilterProjectsAsync(string? search, int pageNumber, int pageSize);
 
         Task<ProjectDto?> GetProjectByIdAsync(int id);
 
@@ -18,6 +19,6 @@ namespace TaskManager.Core.IService
         Task DeleteProjectAsync(int id);
 
         Task AssignUserToProjectAsync(int projectId, int userId);
-        Task<IReadOnlyList<ProjectDto>> GetUserProjectsAsync(int userId);
+        Task<PagedResultDto<ProjectDto>> GetUserProjectsAsync(int userId, int pageNumber, int pageSize);
     }
 }

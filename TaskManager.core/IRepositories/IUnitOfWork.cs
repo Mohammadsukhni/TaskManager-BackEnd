@@ -9,6 +9,7 @@ public interface IUnitOfWork
     IGenericRepository<Sprint> Sprints { get; }
     IGenericRepository<WorkItem> WorkItems { get; }
     IGenericRepository<WorkItemRelation> WorkItemRelations { get; }
+    IGenericRepository<Otp> Otps { get; }
 
     Task<int> SaveChangesAsync();
 }

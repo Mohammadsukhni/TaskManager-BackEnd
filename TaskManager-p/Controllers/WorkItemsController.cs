@@ -1,34 +1,47 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using TaskManager.Core.Constants;
 using TaskManager.Core.Dto;
 using TaskManager.Core.Enum;
 using TaskManager.Core.IService;
 
 namespace TaskManager_p.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
     [Authorize]
-    public class WorkItemsController : ControllerBase
+    public class WorkItemsController : BaseController
     {
         private readonly IWorkItemServices _workItemServices;
 
-        public WorkItemsController(IWorkItemServices workItemServices)
+        public WorkItemsController(
+            IWorkItemServices workItemServices,
+            ICurrentUserService currentUserService)
+            : base(currentUserService)
         {
             _workItemServices = workItemServices;
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<WorkItemDto>>> GetAllWorkItems()
+        public async Task<ActionResult<PagedResultDto<WorkItemDto>>> GetAllWorkItems(
+            int pageNumber = 1,
+            int pageSize = 10)
         {
-            var workItems = await _workItemServices.GetAllWorkItemsAsync();
+            var workItems = await _workItemServices.GetAllWorkItemsAsync(pageNumber, pageSize);
 
             return Ok(workItems);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
+        [HttpGet("filter")]
+        public async Task<ActionResult<PagedResultDto<WorkItemDto>>> FilterWorkItems(
+            string? search,
+            int pageNumber = 1,
+            int pageSize = 10)
+        {
+            return Ok(await _workItemServices.FilterWorkItemsAsync(search, pageNumber, pageSize));
+        }
+
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpGet("{id}")]
         public async Task<ActionResult<WorkItemDto>> GetWorkItemById(int id)
         {
@@ -40,39 +53,25 @@ namespace TaskManager_p.Controllers
             return Ok(workItem);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpPost]
         public async Task<IActionResult> CreateWorkItem(WorkItemDto dto)
         {
-            try
-            {
-                await _workItemServices.CreateWorkItemAsync(dto);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            await _workItemServices.CreateWorkItemAsync(dto);
 
             return Ok();
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpPut]
         public async Task<IActionResult> UpdateWorkItem(WorkItemDto dto)
         {
-            try
-            {
-                await _workItemServices.UpdateWorkItemAsync(dto);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            await _workItemServices.UpdateWorkItemAsync(dto);
 
             return Ok();
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteWorkItem(int id)
         {
@@ -81,23 +80,16 @@ namespace TaskManager_p.Controllers
             return Ok();
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpPost("{workItemId}/assign-user/{userId}")]
         public async Task<IActionResult> AssignWorkItemToUser(int workItemId, int userId)
         {
-            try
-            {
-                await _workItemServices.AssignWorkItemToUserAsync(workItemId, userId);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            await _workItemServices.AssignWorkItemToUserAsync(workItemId, userId);
 
             return Ok();
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpPost("relation")]
         public async Task<IActionResult> AddRelation(int parentWorkItemId, int childWorkItemId)
         {
@@ -108,9 +100,7 @@ namespace TaskManager_p.Controllers
         [HttpPut("{workItemId}/my-status")]
         public async Task<IActionResult> UpdateMyWorkItemStatus(int workItemId, Status status)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
-            await _workItemServices.UpdateAssignedWorkItemStatusAsync(userId, workItemId, status);
+            await _workItemServices.UpdateAssignedWorkItemStatusAsync(CurrentUserId, workItemId, status);
 
             return Ok();
         }
@@ -118,21 +108,21 @@ namespace TaskManager_p.Controllers
         [HttpPut("my-workitem")]
         public async Task<IActionResult> UpdateMyWorkItem(WorkItemDto dto)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
-            await _workItemServices.UpdateAssignedWorkItemAsync(userId, dto);
+            await _workItemServices.UpdateAssignedWorkItemAsync(CurrentUserId, dto);
 
             return Ok();
         }
 
         [HttpGet("my-workitems")]
-        public async Task<IActionResult> GetMyWorkItems()
+        public async Task<ActionResult<PagedResultDto<WorkItemDto>>> GetMyWorkItems(
+            int pageNumber = 1,
+            int pageSize = 10)
         {
-            var userId = int.Parse(
-                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
             var workItems =
-                await _workItemServices.GetUserWorkItemsAsync(userId);
+                await _workItemServices.GetUserWorkItemsAsync(
+                    CurrentUserId,
+                    pageNumber,
+                    pageSize);
 
             return Ok(workItems);
         }

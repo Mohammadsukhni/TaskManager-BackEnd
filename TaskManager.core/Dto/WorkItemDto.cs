@@ -26,5 +26,9 @@ namespace TaskManager.Core.Dto
         public int? AssignedToUserId { get; set; }
 
         public int SprintId { get; set; }
+
+        public int? CreatedById { get; set; }
+
+        public int? LastUpdatedById { get; set; }
     }
 }

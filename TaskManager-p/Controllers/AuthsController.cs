@@ -4,13 +4,14 @@ using TaskManager.Core.IService;
 
 namespace TaskManager_p.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AuthsController : ControllerBase
+    public class AuthsController : BaseController
     {
         private readonly IAuthServices _authServices;
 
-        public AuthsController(IAuthServices authServices)
+        public AuthsController(
+            IAuthServices authServices,
+            ICurrentUserService currentUserService)
+            : base(currentUserService)
         {
             _authServices = authServices;
         }
@@ -18,14 +19,7 @@ namespace TaskManager_p.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
-            try
-            {
-                await _authServices.LoginAsync(dto);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            await _authServices.LoginAsync(dto);
 
             return Ok("OTP sent successfully");
         }
@@ -33,16 +27,7 @@ namespace TaskManager_p.Controllers
         [HttpPost("verify-otp")]
         public async Task<IActionResult> VerifyOtp(VerifyOtpDto dto)
         {
-            AuthResponseDto? result;
-
-            try
-            {
-                result = await _authServices.VerifyOtpAsync(dto);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _authServices.VerifyOtpAsync(dto);
 
             if (result == null)
                 return BadRequest("Invalid OTP");
@@ -53,14 +38,7 @@ namespace TaskManager_p.Controllers
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto)
         {
-            try
-            {
-                await _authServices.ForgotPasswordAsync(dto);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            await _authServices.ForgotPasswordAsync(dto);
 
             return Ok("OTP sent successfully");
         }
@@ -68,14 +46,7 @@ namespace TaskManager_p.Controllers
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
         {
-            try
-            {
-                await _authServices.ResetPasswordAsync(dto);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            await _authServices.ResetPasswordAsync(dto);
 
             return Ok("Password reset successfully");
         }

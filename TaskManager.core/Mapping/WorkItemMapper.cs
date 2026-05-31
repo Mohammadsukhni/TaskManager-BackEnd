@@ -20,7 +20,9 @@ namespace TaskManager.Core.Mapping
                 Type = workItem.Type,
                 ReferenceNumber = workItem.ReferenceNumber,
                 AssignedToUserId = workItem.AssignedToUserId,
-                SprintId = workItem.SprintId
+                SprintId = workItem.SprintId,
+                CreatedById = workItem.CreatedById,
+                LastUpdatedById = workItem.LastUpdatedById
             };
         }
 

@@ -13,7 +13,9 @@ namespace TaskManager.Core.Mapping
             {
                 Id = project.Id,
                 Name = project.Name,
-                ReferenceNumber = project.ReferenceNumber
+                ReferenceNumber = project.ReferenceNumber,
+                CreatedById = project.CreatedById,
+                LastUpdatedById = project.LastUpdatedById
             };
         }
 

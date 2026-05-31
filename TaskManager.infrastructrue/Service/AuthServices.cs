@@ -3,9 +3,11 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using TaskManager.Core.Constants;
 using TaskManager.Core.Dto;
 using TaskManager.Core.Entities;
 using TaskManager.Core.Enum;
+using TaskManager.Core.Exceptions;
 using TaskManager.Core.Helper;
 using TaskManager.Core.IRepositories;
 using TaskManager.Core.IService;
@@ -14,42 +16,53 @@ namespace TaskManager.Infrastructure.Service
 {
     public class AuthServices : IAuthServices
     {
+        private const int OtpLifetimeInMinutes = 5;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
+        private readonly ILoginAttemptService _loginAttemptService;
 
-        public AuthServices(IUnitOfWork unitOfWork, IConfiguration configuration, IEmailService emailService)
+        public AuthServices(IUnitOfWork unitOfWork, IConfiguration configuration, IEmailService emailService, ILoginAttemptService loginAttemptService)
         {
             _unitOfWork = unitOfWork;
             _configuration = configuration;
             _emailService = emailService;
+            _loginAttemptService = loginAttemptService;
         }
 
         public async Task LoginAsync(LoginDto dto)
         {
+            _loginAttemptService.EnsureLoginAllowed(dto.Email);
+
             var user = await GetUserByEmailAsync(dto.Email);
 
             if (user == null)
-                throw new InvalidOperationException("Invalid email or password.");
+            {
+                _loginAttemptService.RegisterFailedAttempt(dto.Email);
+                throw new BadRequestException("Invalid email or password.");
+            }
 
-            await EnsureAdminActiveAsync(user);
+            EnsureAdminActive(user);
 
             if (!user.IsActive)
-                throw new InvalidOperationException("This account is deactivated. You cannot login.");
+                throw new BadRequestException("This account is deactivated. You cannot login.");
 
             if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-                throw new InvalidOperationException("Invalid email or password.");
+            {
+                _loginAttemptService.RegisterFailedAttempt(dto.Email);
+                throw new BadRequestException("Invalid email or password.");
+            }
 
-            user.OtpCode = OtpHelper.GenerateOtp();
-            user.OtpExpiration = DateTime.UtcNow.AddMinutes(5);
+            _loginAttemptService.ResetFailedAttempts(dto.Email);
 
-            _unitOfWork.Users.Update(user);
-            await _unitOfWork.SaveChangesAsync();
+            var otpCode = OtpHelper.GenerateOtp();
+
+            await CreateOtpAsync(user.Id, otpCode, OtpActionType.Login);
 
             await _emailService.SendEmailAsync(
                 user.Email,
                 "Task Manager OTP",
-                $"<h3>Your OTP Code is: {user.OtpCode}</h3>");
+                $"<h3>Your OTP Code is: {otpCode}</h3>");
         }
 
         public async Task<AuthResponseDto?> VerifyOtpAsync(VerifyOtpDto dto)
@@ -59,23 +72,17 @@ namespace TaskManager.Infrastructure.Service
             if (user == null)
                 return null;
 
-            await EnsureAdminActiveAsync(user);
+            EnsureAdminActive(user);
 
             if (!user.IsActive)
-                throw new InvalidOperationException("This account is deactivated. You cannot login.");
+                throw new BadRequestException("This account is deactivated. You cannot login.");
 
-            if (user.OtpCode != dto.Otp)
+            var otp = await GetValidOtpAsync(user.Id, dto.Otp, OtpActionType.Login);
+
+            if (otp == null)
                 return null;
 
-            if (user.OtpExpiration == null ||
-                user.OtpExpiration < DateTime.UtcNow)
-                return null;
-
-            user.OtpCode = null;
-            user.OtpExpiration = null;
-
-            _unitOfWork.Users.Update(user);
-            await _unitOfWork.SaveChangesAsync();
+            _unitOfWork.Otps.Delete(otp);
 
             return GenerateJwtToken(user);
         }
@@ -87,21 +94,19 @@ namespace TaskManager.Infrastructure.Service
             if (user == null)
                 return;
 
-            await EnsureAdminActiveAsync(user);
+            EnsureAdminActive(user);
 
             if (!user.IsActive)
-                throw new InvalidOperationException("This account is deactivated.");
+                throw new BadRequestException("This account is deactivated.");
 
-            user.OtpCode = OtpHelper.GenerateOtp();
-            user.OtpExpiration = DateTime.UtcNow.AddMinutes(5);
+            var otpCode = OtpHelper.GenerateOtp();
 
-            _unitOfWork.Users.Update(user);
-            await _unitOfWork.SaveChangesAsync();
+            await CreateOtpAsync(user.Id, otpCode, OtpActionType.ForgetPassword);
 
             await _emailService.SendEmailAsync(
                 user.Email,
                 "Reset Password OTP",
-                $"<h3>Your Reset Password OTP is: {user.OtpCode}</h3>");
+                $"<h3>Your Reset Password OTP is: {otpCode}</h3>");
         }
 
         public async Task ResetPasswordAsync(ResetPasswordDto dto)
@@ -111,16 +116,14 @@ namespace TaskManager.Infrastructure.Service
             if (user == null)
                 return;
 
-            await EnsureAdminActiveAsync(user);
+            EnsureAdminActive(user);
 
             if (!user.IsActive)
-                throw new InvalidOperationException("This account is deactivated.");
+                throw new BadRequestException("This account is deactivated.");
 
-            if (user.OtpCode != dto.Otp)
-                return;
+            var otp = await GetValidOtpAsync(user.Id, dto.Otp, OtpActionType.ForgetPassword);
 
-            if (user.OtpExpiration == null ||
-                user.OtpExpiration < DateTime.UtcNow)
+            if (otp == null)
                 return;
 
             if (dto.NewPassword != dto.ConfirmPassword)
@@ -131,11 +134,8 @@ namespace TaskManager.Infrastructure.Service
             user.PasswordHash =
                 BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
 
-            user.OtpCode = null;
-            user.OtpExpiration = null;
-
+            _unitOfWork.Otps.Delete(otp);
             _unitOfWork.Users.Update(user);
-            await _unitOfWork.SaveChangesAsync();
         }
 
         private async Task<User?> GetUserByEmailAsync(string email)
@@ -145,14 +145,51 @@ namespace TaskManager.Infrastructure.Service
             return users.FirstOrDefault(x => x.Email == email);
         }
 
-        private async Task EnsureAdminActiveAsync(User user)
+        private void EnsureAdminActive(User user)
         {
             if (user.UserRole != UserRole.Admin || user.IsActive)
                 return;
 
             user.IsActive = true;
             _unitOfWork.Users.Update(user);
-            await _unitOfWork.SaveChangesAsync();
+        }
+
+        private async Task CreateOtpAsync(int receiverId, string code, OtpActionType actionType)
+        {
+            await DeleteExistingOtpsAsync(receiverId, actionType);
+
+            var otp = new Otp
+            {
+                ReceiverId = receiverId,
+                Code = code,
+                ActionType = actionType
+            };
+
+            await _unitOfWork.Otps.CreateAsync(otp);
+        }
+
+        private async Task<Otp?> GetValidOtpAsync(int receiverId, string code, OtpActionType actionType)
+        {
+            var otps = await _unitOfWork.Otps.GetAllAsync();
+
+            return otps
+                .Where(x => x.ReceiverId == receiverId &&
+                            x.ActionType == actionType &&
+                            x.Code == code &&
+                            x.CreatedDate.AddMinutes(OtpLifetimeInMinutes) >= DateTime.Now)
+                .OrderByDescending(x => x.CreatedDate)
+                .FirstOrDefault();
+        }
+
+        private async Task DeleteExistingOtpsAsync(int receiverId, OtpActionType actionType)
+        {
+            var otps = await _unitOfWork.Otps.GetAllAsync();
+
+            foreach (var otp in otps.Where(x => x.ReceiverId == receiverId &&
+                                                x.ActionType == actionType))
+            {
+                _unitOfWork.Otps.Delete(otp);
+            }
         }
 
         private AuthResponseDto GenerateJwtToken(User user)
@@ -161,11 +198,11 @@ namespace TaskManager.Infrastructure.Service
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.UserRole.ToString())
+                new Claim(ClaimTypes.Role, ApplicationRoles.FromUserRole(user.UserRole))
             };
 
             var jwtKey = _configuration["Jwt:Key"] ??
-                         throw new InvalidOperationException("Jwt:Key is missing.");
+                         throw new ConfigurationException("Jwt:Key is missing.");
 
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtKey));

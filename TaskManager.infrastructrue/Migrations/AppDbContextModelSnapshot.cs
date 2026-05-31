@@ -22,7 +22,7 @@ namespace TaskManager.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("TaskManager.Core.Entities.Project", b =>
+            modelBuilder.Entity("TaskManager.Core.Entities.Otp", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -30,9 +30,16 @@ namespace TaskManager.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CreatedBy")
+                    b.Property<int>("ActionType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Code")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(6)
+                        .HasColumnType("nvarchar(6)");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -43,8 +50,44 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastUpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ReceiverId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReceiverId");
+
+                    b.ToTable("Otps");
+                });
+
+            modelBuilder.Entity("TaskManager.Core.Entities.Project", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("LastUpdatedDate")
                         .HasColumnType("datetime2");
@@ -71,9 +114,8 @@ namespace TaskManager.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -90,8 +132,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("LastUpdatedDate")
                         .HasColumnType("datetime2");
@@ -123,9 +165,8 @@ namespace TaskManager.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -150,16 +191,10 @@ namespace TaskManager.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("LastUpdatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("OtpCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("OtpExpiration")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("PasswordHash")
@@ -185,9 +220,9 @@ namespace TaskManager.Infrastructure.Migrations
                         new
                         {
                             Id = -1,
-                            CreatedBy = "Seed",
+                            CreatedById = -1,
                             CreatedDate = new DateTime(2026, 5, 27, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "admin@taskmanager.local",
+                            Email = "muhalsukhni@gmail.com",
                             FirstName = "Mohammad",
                             IsActive = true,
                             IsDeleted = false,
@@ -206,9 +241,8 @@ namespace TaskManager.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -219,8 +253,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("LastUpdatedDate")
                         .HasColumnType("datetime2");
@@ -255,9 +289,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<int?>("AssignedToUserId")
                         .HasColumnType("int");
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -276,8 +309,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("LastUpdatedDate")
                         .HasColumnType("datetime2");
@@ -320,9 +353,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<int>("ChildWorkItemId")
                         .HasColumnType("int");
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -333,8 +365,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("LastUpdatedDate")
                         .HasColumnType("datetime2");
@@ -351,12 +383,23 @@ namespace TaskManager.Infrastructure.Migrations
                     b.ToTable("WorkItemRelations");
                 });
 
+            modelBuilder.Entity("TaskManager.Core.Entities.Otp", b =>
+                {
+                    b.HasOne("TaskManager.Core.Entities.User", "Receiver")
+                        .WithMany("Otps")
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Receiver");
+                });
+
             modelBuilder.Entity("TaskManager.Core.Entities.Sprint", b =>
                 {
                     b.HasOne("TaskManager.Core.Entities.Project", "Project")
                         .WithMany("Sprints")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Project");
@@ -367,13 +410,13 @@ namespace TaskManager.Infrastructure.Migrations
                     b.HasOne("TaskManager.Core.Entities.Project", "Project")
                         .WithMany("UserProjects")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("TaskManager.Core.Entities.User", "User")
                         .WithMany("UserProjects")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Project");
@@ -386,12 +429,12 @@ namespace TaskManager.Infrastructure.Migrations
                     b.HasOne("TaskManager.Core.Entities.User", "AssignedToUser")
                         .WithMany("WorkItems")
                         .HasForeignKey("AssignedToUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("TaskManager.Core.Entities.Sprint", "Sprint")
                         .WithMany("WorkItems")
                         .HasForeignKey("SprintId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("AssignedToUser");
@@ -404,13 +447,13 @@ namespace TaskManager.Infrastructure.Migrations
                     b.HasOne("TaskManager.Core.Entities.WorkItem", "ChildWorkItem")
                         .WithMany("ChildRelations")
                         .HasForeignKey("ChildWorkItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("TaskManager.Core.Entities.WorkItem", "ParentWorkItem")
                         .WithMany("ParentRelations")
                         .HasForeignKey("ParentWorkItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("ChildWorkItem");
@@ -432,6 +475,8 @@ namespace TaskManager.Infrastructure.Migrations
 
             modelBuilder.Entity("TaskManager.Core.Entities.User", b =>
                 {
+                    b.Navigation("Otps");
+
                     b.Navigation("UserProjects");
 
                     b.Navigation("WorkItems");
@@ -447,4 +492,3 @@ namespace TaskManager.Infrastructure.Migrations
         }
     }
 }
-

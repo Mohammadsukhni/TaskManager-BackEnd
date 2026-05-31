@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Text;
+using TaskManager.Core.Dto;
 using TaskManager.Core.Entities;
 
 namespace TaskManager.Core.IRepositories
@@ -9,6 +11,9 @@ namespace TaskManager.Core.IRepositories
     {
         Task CreateAsync(T entity);
         Task<IReadOnlyList<T>> GetAllAsync();
+        Task<IReadOnlyList<T>> GetAllAsync(Expression<Func<T, bool>> predicate);
+        Task<PagedResultDto<T>> GetPagedAsync(int pageNumber, int pageSize);
+        Task<PagedResultDto<T>> GetPagedAsync(Expression<Func<T, bool>> predicate, int pageNumber, int pageSize);
         Task<T?> GetByIdAsync(int id);
         void Update(T entity);
         void Delete(T entity);

@@ -10,7 +10,8 @@ namespace TaskManager.Core.IService
     {
         Task CreateWorkItemAsync(WorkItemDto dto);
 
-        Task<IReadOnlyList<WorkItemDto>> GetAllWorkItemsAsync();
+        Task<PagedResultDto<WorkItemDto>> GetAllWorkItemsAsync(int pageNumber, int pageSize);
+        Task<PagedResultDto<WorkItemDto>> FilterWorkItemsAsync(string? search, int pageNumber, int pageSize);
 
         Task<WorkItemDto?> GetWorkItemByIdAsync(int id);
 
@@ -26,7 +27,7 @@ namespace TaskManager.Core.IService
 
         Task AddWorkItemRelationAsync(int parentWorkItemId, int childWorkItemId);
 
-        Task<IReadOnlyList<WorkItemDto>> GetUserWorkItemsAsync(int userId);
+        Task<PagedResultDto<WorkItemDto>> GetUserWorkItemsAsync(int userId, int pageNumber, int pageSize);
 
     }
 }

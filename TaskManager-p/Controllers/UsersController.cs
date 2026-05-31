@@ -1,31 +1,44 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using TaskManager.Core.Constants;
 using TaskManager.Core.Dto;
 using TaskManager.Core.IService;
 
 namespace TaskManager_p.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
     [Authorize]
-    public class UsersController : ControllerBase
+    public class UsersController : BaseController
     {
         private readonly IUserService _userService;
 
-        public UsersController(IUserService userService)
+        public UsersController(
+            IUserService userService,
+            ICurrentUserService currentUserService)
+            : base(currentUserService)
         {
             _userService = userService;
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<UserDto>>> GetAllUsers()
+        public async Task<ActionResult<PagedResultDto<UserDto>>> GetAllUsers(
+            int pageNumber = 1,
+            int pageSize = 10)
         {
-            return Ok(await _userService.GetAllUsersAsync());
+            return Ok(await _userService.GetAllUsersAsync(pageNumber, pageSize));
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
+        [HttpGet("filter")]
+        public async Task<ActionResult<UserFilterResultDto>> FilterUsers(
+            string? search,
+            int pageNumber = 1,
+            int pageSize = 10)
+        {
+            return Ok(await _userService.FilterUsersAsync(search, pageNumber, pageSize));
+        }
+
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpGet("{id}")]
         public async Task<ActionResult<UserDto>> GetUserById(int id)
         {
@@ -37,7 +50,7 @@ namespace TaskManager_p.Controllers
             return Ok(user);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpPost]
         public async Task<IActionResult> CreateUser(UserDto dto)
         {
@@ -46,7 +59,7 @@ namespace TaskManager_p.Controllers
             return Ok();
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpPut]
         public async Task<IActionResult> UpdateUser(UserDto dto)
         {
@@ -55,18 +68,11 @@ namespace TaskManager_p.Controllers
             return Ok();
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpPut("change-status")]
         public async Task<IActionResult> ChangeUserStatus(int userId, bool isActive)
         {
-            try
-            {
-                await _userService.ChangeUserStatusAsync(userId, isActive);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            await _userService.ChangeUserStatusAsync(userId, isActive);
 
             return Ok();
         }
@@ -75,10 +81,7 @@ namespace TaskManager_p.Controllers
         [HttpGet("my-account")]
         public async Task<ActionResult<UserDto>> GetMyAccount()
         {
-            var userId = int.Parse(
-                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
-            var user = await _userService.GetUserByIdAsync(userId);
+            var user = await _userService.GetUserByIdAsync(CurrentUserId);
 
             if (user == null)
                 return NotFound();
@@ -90,15 +93,12 @@ namespace TaskManager_p.Controllers
         [HttpPut("my-account")]
         public async Task<IActionResult> UpdateMyAccount(UserDto dto)
         {
-            var userId = int.Parse(
-                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
-            await _userService.UpdateOwnAccountAsync(userId, dto);
+            await _userService.UpdateOwnAccountAsync(CurrentUserId, dto);
 
             return Ok();
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {

@@ -1,6 +1,7 @@
 ﻿using TaskManager.Core.Dto;
 using TaskManager.Core.Entities;
 using TaskManager.Core.Enum;
+using TaskManager.Core.Exceptions;
 using TaskManager.Core.Helper;
 using TaskManager.Core.IRepositories;
 using TaskManager.Core.IService;
@@ -23,10 +24,10 @@ namespace TaskManager.Infrastructure.Service
             var sprint = await _unitOfWork.Sprints.GetByIdAsync(dto.SprintId);
 
             if (sprint == null)
-                throw new InvalidOperationException("Sprint not found.");
+                throw new BadRequestException("Sprint not found.");
 
             if (IsSprintEnded(sprint.DateTo))
-                throw new InvalidOperationException("Cannot add work item to an ended sprint.");
+                throw new BadRequestException("Cannot add work item to an ended sprint.");
 
             var workItem = dto.ToEntity();
 
@@ -34,14 +35,43 @@ namespace TaskManager.Infrastructure.Service
                 ReferenceNumberHelper.GenerateWorkItemReference(dto.Type);
 
             await _unitOfWork.WorkItems.CreateAsync(workItem);
-            await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task<IReadOnlyList<WorkItemDto>> GetAllWorkItemsAsync()
+        public async Task<PagedResultDto<WorkItemDto>> GetAllWorkItemsAsync(
+            int pageNumber,
+            int pageSize)
         {
-            var workItems = await _unitOfWork.WorkItems.GetAllAsync();
+            var workItems = await _unitOfWork.WorkItems.GetPagedAsync(pageNumber, pageSize);
 
-            return workItems.Select(x => x.ToDto()).ToList();
+            return workItems.ToPagedDto(x => x.ToDto());
+        }
+
+        public async Task<PagedResultDto<WorkItemDto>> FilterWorkItemsAsync(
+            string? search,
+            int pageNumber,
+            int pageSize)
+        {
+            var term = NormalizeSearch(search);
+
+            if (string.IsNullOrWhiteSpace(term))
+                return await GetAllWorkItemsAsync(pageNumber, pageSize);
+
+            var hasStatus = Enum.TryParse<Status>(term, true, out var status);
+            var hasType = Enum.TryParse<WorkItemType>(term, true, out var type);
+            var hasTime = TimeSpan.TryParse(term, out var time);
+
+            var workItems = await _unitOfWork.WorkItems.GetPagedAsync(
+                x => x.Title.Contains(term) ||
+                     x.Description.Contains(term) ||
+                     x.ReferenceNumber.Contains(term) ||
+                     (hasStatus && x.Status == status) ||
+                     (hasType && x.Type == type) ||
+                     (hasTime && (x.EstimatedTime == time ||
+                                  x.ActualTime == time)),
+                pageNumber,
+                pageSize);
+
+            return workItems.ToPagedDto(x => x.ToDto());
         }
 
         public async Task<WorkItemDto?> GetWorkItemByIdAsync(int id)
@@ -67,7 +97,7 @@ namespace TaskManager.Infrastructure.Service
                 return;
 
             if (workItem.SprintId != dto.SprintId && IsSprintEnded(sprint.DateTo))
-                throw new InvalidOperationException("Cannot move work item to an ended sprint.");
+                throw new BadRequestException("Cannot move work item to an ended sprint.");
 
             var hasRelations = (await _unitOfWork.WorkItemRelations.GetAllAsync())
                 .Any(x => x.ParentWorkItemId == workItem.Id ||
@@ -85,7 +115,6 @@ namespace TaskManager.Infrastructure.Service
             workItem.SprintId = dto.SprintId;
 
             _unitOfWork.WorkItems.Update(workItem);
-            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task DeleteWorkItemAsync(int id)
@@ -96,7 +125,6 @@ namespace TaskManager.Infrastructure.Service
                 return;
 
             _unitOfWork.WorkItems.Delete(workItem);
-            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task AssignWorkItemToUserAsync(int workItemId, int userId)
@@ -105,33 +133,32 @@ namespace TaskManager.Infrastructure.Service
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
 
             if (workItem == null)
-                throw new InvalidOperationException("Work item not found.");
+                throw new BadRequestException("Work item not found.");
 
             if (user == null)
-                throw new InvalidOperationException("User not found.");
+                throw new BadRequestException("User not found.");
 
             if (user.UserRole != UserRole.User)
-                throw new InvalidOperationException("Only regular users can be assigned.");
+                throw new BadRequestException("Only regular users can be assigned.");
 
             if (!user.IsActive)
-                throw new InvalidOperationException("Cannot assign a deactivated user.");
+                throw new BadRequestException("Cannot assign a deactivated user.");
 
             var sprint = await _unitOfWork.Sprints.GetByIdAsync(workItem.SprintId);
 
             if (sprint == null)
-                throw new InvalidOperationException("Sprint not found.");
+                throw new BadRequestException("Sprint not found.");
 
             var isUserInProject = (await _unitOfWork.UserProjects.GetAllAsync())
                 .Any(x => x.UserId == userId &&
                           x.ProjectId == sprint.ProjectId);
 
             if (!isUserInProject)
-                throw new InvalidOperationException("User must be assigned to the project first.");
+                throw new BadRequestException("User must be assigned to the project first.");
 
             workItem.AssignedToUserId = userId;
 
             _unitOfWork.WorkItems.Update(workItem);
-            await _unitOfWork.SaveChangesAsync();
             await _emailService.SendEmailAsync( user.Email, "New Work Item Assigned", $@" <h3>New Work Item Assigned To You</h3> <p>Title: {workItem.Title}</p> <p>Description: {workItem.Description}</p> <p>Status: {workItem.Status}</p>");
         }
 
@@ -183,17 +210,19 @@ namespace TaskManager.Infrastructure.Service
             };
 
             await _unitOfWork.WorkItemRelations.CreateAsync(relation);
-            await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task<IReadOnlyList<WorkItemDto>> GetUserWorkItemsAsync(int userId)
+        public async Task<PagedResultDto<WorkItemDto>> GetUserWorkItemsAsync(
+            int userId,
+            int pageNumber,
+            int pageSize)
         {
-            var workItems = await _unitOfWork.WorkItems.GetAllAsync();
+            var workItems = await _unitOfWork.WorkItems.GetPagedAsync(
+                x => x.AssignedToUserId == userId,
+                pageNumber,
+                pageSize);
 
-            return workItems
-                .Where(x => x.AssignedToUserId == userId)
-                .Select(x => x.ToDto())
-                .ToList();
+            return workItems.ToPagedDto(x => x.ToDto());
         }
 
         public async Task UpdateAssignedWorkItemStatusAsync(int userId,int workItemId,Status status)
@@ -210,7 +239,6 @@ namespace TaskManager.Infrastructure.Service
             workItem.Status = status;
 
             _unitOfWork.WorkItems.Update(workItem);
-            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task UpdateAssignedWorkItemAsync(int userId, WorkItemDto dto)
@@ -229,12 +257,16 @@ namespace TaskManager.Infrastructure.Service
             workItem.Status = dto.Status;
 
             _unitOfWork.WorkItems.Update(workItem);
-            await _unitOfWork.SaveChangesAsync();
         }
 
         private static bool IsSprintEnded(DateTime dateTo)
         {
             return dateTo.Date < DateTime.UtcNow.Date;
+        }
+
+        private static string NormalizeSearch(string? search)
+        {
+            return search?.Trim() ?? string.Empty;
         }
     }
 }

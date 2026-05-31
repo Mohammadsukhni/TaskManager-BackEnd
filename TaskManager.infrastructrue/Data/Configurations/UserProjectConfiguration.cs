@@ -12,6 +12,7 @@ namespace TaskManager.Infrastructure.Data.Configurations
         public void Configure(EntityTypeBuilder<UserProject> builder)
         {
             builder.HasKey(up => up.Id);
+            builder.Property(up => up.Id).ValueGeneratedOnAdd();
             // Ensure that a user can only be assigned to a project once
             builder.HasIndex(up => new { up.UserId, up.ProjectId })
                    .IsUnique();
@@ -19,11 +20,11 @@ namespace TaskManager.Infrastructure.Data.Configurations
             builder.HasOne(up => up.User)
                    .WithMany(u => u.UserProjects)
                    .HasForeignKey(up => up.UserId)
-                   .OnDelete(DeleteBehavior.Restrict);
+                   .OnDelete(DeleteBehavior.NoAction);
             builder.HasOne(up => up.Project)
                 .WithMany(p => p.UserProjects)
                 .HasForeignKey(up => up.ProjectId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

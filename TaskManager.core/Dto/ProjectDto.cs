@@ -11,5 +11,9 @@ namespace TaskManager.Core.Dto
         public string Name { get; set; } = string.Empty;
 
         public string ReferenceNumber { get; set; } = string.Empty;
+
+        public int? CreatedById { get; set; }
+
+        public int? LastUpdatedById { get; set; }
     }
 }

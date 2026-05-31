@@ -17,7 +17,9 @@ namespace TaskManager.Core.Mapping
                 Email = user.Email,
                 Phone = user.Phone,
                 UserRole = user.UserRole,
-                IsActive = user.IsActive
+                IsActive = user.IsActive,
+                CreatedById = user.CreatedById,
+                LastUpdatedById = user.LastUpdatedById
             };
         }
 

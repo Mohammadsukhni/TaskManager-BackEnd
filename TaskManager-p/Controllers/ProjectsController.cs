@@ -1,33 +1,46 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using TaskManager.Core.Constants;
 using TaskManager.Core.Dto;
 using TaskManager.Core.IService;
 
 namespace TaskManager_p.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
     [Authorize]
-    public class ProjectsController : ControllerBase
+    public class ProjectsController : BaseController
     {
         private readonly IProjectServices _projectServices;
 
-        public ProjectsController(IProjectServices projectServices)
+        public ProjectsController(
+            IProjectServices projectServices,
+            ICurrentUserService currentUserService)
+            : base(currentUserService)
         {
             _projectServices = projectServices;
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<ProjectDto>>> GetAllProjects()
+        public async Task<ActionResult<PagedResultDto<ProjectDto>>> GetAllProjects(
+            int pageNumber = 1,
+            int pageSize = 10)
         {
-            var projects = await _projectServices.GetAllProjectsAsync();
+            var projects = await _projectServices.GetAllProjectsAsync(pageNumber, pageSize);
 
             return Ok(projects);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
+        [HttpGet("filter")]
+        public async Task<ActionResult<ProjectFilterResultDto>> FilterProjects(
+            string? search,
+            int pageNumber = 1,
+            int pageSize = 10)
+        {
+            return Ok(await _projectServices.FilterProjectsAsync(search, pageNumber, pageSize));
+        }
+
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpGet("{id}")]
         public async Task<ActionResult<ProjectDto>> GetProjectById(int id)
         {
@@ -40,17 +53,19 @@ namespace TaskManager_p.Controllers
         }
 
         [HttpGet("my-projects")]
-        public async Task<IActionResult> GetMyProjects()
+        public async Task<ActionResult<PagedResultDto<ProjectDto>>> GetMyProjects(
+            int pageNumber = 1,
+            int pageSize = 10)
         {
-            var userId = int.Parse(
-                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
-            var projects = await _projectServices.GetUserProjectsAsync(userId);
+            var projects = await _projectServices.GetUserProjectsAsync(
+                CurrentUserId,
+                pageNumber,
+                pageSize);
 
             return Ok(projects);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpPost]
         public async Task<IActionResult> CreateProject(ProjectDto dto)
         {
@@ -59,7 +74,7 @@ namespace TaskManager_p.Controllers
             return Ok();
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpPut]
         public async Task<IActionResult> UpdateProject(ProjectDto dto)
         {
@@ -68,7 +83,7 @@ namespace TaskManager_p.Controllers
             return Ok();
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProject(int id)
         {
@@ -77,18 +92,11 @@ namespace TaskManager_p.Controllers
             return Ok();
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = ApplicationRoles.Admin)]
         [HttpPost("{projectId}/assign-user/{userId}")]
         public async Task<IActionResult> AssignUserToProject(int projectId, int userId)
         {
-            try
-            {
-                await _projectServices.AssignUserToProjectAsync(projectId, userId);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            await _projectServices.AssignUserToProjectAsync(projectId, userId);
 
             return Ok();
         }

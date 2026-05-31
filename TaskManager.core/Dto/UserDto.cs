@@ -15,5 +15,7 @@ namespace TaskManager.Core.Dto
         public string Password { get; set; } = string.Empty;
         public UserRole UserRole { get; set; }
         public bool IsActive { get; set; } = true;
+        public int? CreatedById { get; set; }
+        public int? LastUpdatedById { get; set; }
     }
 }

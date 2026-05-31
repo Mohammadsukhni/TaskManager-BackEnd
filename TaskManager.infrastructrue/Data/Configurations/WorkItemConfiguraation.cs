@@ -12,6 +12,7 @@ namespace TaskManager.Infrastructure.Data.Configurations
         public void Configure(EntityTypeBuilder<WorkItem> builder)
         {
             builder.HasKey(w => w.Id);
+            builder.Property(w => w.Id).ValueGeneratedOnAdd();
             builder.Property(w => w.Title)
                 .IsRequired()
                 .HasMaxLength(50);
@@ -27,11 +28,11 @@ namespace TaskManager.Infrastructure.Data.Configurations
             builder.HasOne(w => w.AssignedToUser)
                  .WithMany(u => u.WorkItems)
                  .HasForeignKey(w => w.AssignedToUserId)
-                 .OnDelete(DeleteBehavior.Restrict);
+                 .OnDelete(DeleteBehavior.NoAction);
             builder.HasOne(w => w.Sprint)
                  .WithMany(s => s.WorkItems)
                  .HasForeignKey(w => w.SprintId)
-                 .OnDelete(DeleteBehavior.Restrict);
+                 .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

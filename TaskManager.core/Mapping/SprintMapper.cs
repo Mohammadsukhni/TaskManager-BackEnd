@@ -19,7 +19,9 @@ namespace TaskManager.Core.Mapping
                 DateFrom = sprint.DateFrom,
                 DateTo = sprint.DateTo,
                 ProjectId = sprint.ProjectId,
-                ReferenceNumber = sprint.ReferenceNumber
+                ReferenceNumber = sprint.ReferenceNumber,
+                CreatedById = sprint.CreatedById,
+                LastUpdatedById = sprint.LastUpdatedById
             };
         }
 
