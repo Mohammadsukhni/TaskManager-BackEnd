@@ -22,9 +22,9 @@ namespace TaskManager.Infrastructure.Migrations
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedById = table.Column<int>(type: "int", nullable: true),
                     LastUpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    LastUpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    LastUpdatedById = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -46,9 +46,9 @@ namespace TaskManager.Infrastructure.Migrations
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedById = table.Column<int>(type: "int", nullable: true),
                     LastUpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    LastUpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    LastUpdatedById = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -69,9 +69,9 @@ namespace TaskManager.Infrastructure.Migrations
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedById = table.Column<int>(type: "int", nullable: true),
                     LastUpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    LastUpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    LastUpdatedById = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -80,8 +80,33 @@ namespace TaskManager.Infrastructure.Migrations
                         name: "FK_Sprints_Projects_ProjectId",
                         column: x => x.ProjectId,
                         principalTable: "Projects",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Otps",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ReceiverId = table.Column<int>(type: "int", nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(6)", maxLength: 6, nullable: false),
+                    ActionType = table.Column<int>(type: "int", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedById = table.Column<int>(type: "int", nullable: true),
+                    LastUpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LastUpdatedById = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Otps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Otps_Users_ReceiverId",
+                        column: x => x.ReceiverId,
+                        principalTable: "Users",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -95,9 +120,9 @@ namespace TaskManager.Infrastructure.Migrations
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedById = table.Column<int>(type: "int", nullable: true),
                     LastUpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    LastUpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    LastUpdatedById = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -106,14 +131,12 @@ namespace TaskManager.Infrastructure.Migrations
                         name: "FK_UserProjects_Projects_ProjectId",
                         column: x => x.ProjectId,
                         principalTable: "Projects",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_UserProjects_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -134,9 +157,9 @@ namespace TaskManager.Infrastructure.Migrations
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedById = table.Column<int>(type: "int", nullable: true),
                     LastUpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    LastUpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    LastUpdatedById = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -145,14 +168,12 @@ namespace TaskManager.Infrastructure.Migrations
                         name: "FK_WorkItems_Sprints_SprintId",
                         column: x => x.SprintId,
                         principalTable: "Sprints",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_WorkItems_Users_AssignedToUserId",
                         column: x => x.AssignedToUserId,
                         principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -166,9 +187,9 @@ namespace TaskManager.Infrastructure.Migrations
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedById = table.Column<int>(type: "int", nullable: true),
                     LastUpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    LastUpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    LastUpdatedById = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -177,15 +198,23 @@ namespace TaskManager.Infrastructure.Migrations
                         name: "FK_WorkItemRelations_WorkItems_ChildWorkItemId",
                         column: x => x.ChildWorkItemId,
                         principalTable: "WorkItems",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_WorkItemRelations_WorkItems_ParentWorkItemId",
                         column: x => x.ParentWorkItemId,
                         principalTable: "WorkItems",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
+
+            migrationBuilder.InsertData(
+                table: "Users",
+                columns: new[] { "Id", "CreatedById", "CreatedDate", "Email", "FirstName", "IsActive", "IsDeleted", "LastName", "LastUpdatedById", "LastUpdatedDate", "PasswordHash", "Phone", "UserRole" },
+                values: new object[] { 1, 1, new DateTime(2026, 5, 27, 0, 0, 0, 0, DateTimeKind.Unspecified), "muhalsukhni@gmail.com", "Mohammad", true, false, "Alsukhni", null, null, "$2a$11$Fl8jk/Zy1yA/M84RLJkfqeO1tMea4yc4vLm9yejrjNMszzvNMlUA.", "0790000000", 0 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Otps_ReceiverId",
+                table: "Otps",
+                column: "ReceiverId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Sprints_ProjectId",
@@ -233,6 +262,9 @@ namespace TaskManager.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Otps");
+
             migrationBuilder.DropTable(
                 name: "UserProjects");
 

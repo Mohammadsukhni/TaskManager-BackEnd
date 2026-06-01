@@ -12,8 +12,8 @@ using TaskManager.Infrastructure.Data;
 namespace TaskManager.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260531193326_DeleteTypenoAction")]
-    partial class DeleteTypenoAction
+    [Migration("20260601123828_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -41,9 +41,8 @@ namespace TaskManager.Infrastructure.Migrations
                         .HasMaxLength(6)
                         .HasColumnType("nvarchar(6)");
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -54,8 +53,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("LastUpdatedDate")
                         .HasColumnType("datetime2");
@@ -78,9 +77,8 @@ namespace TaskManager.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -91,8 +89,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("LastUpdatedDate")
                         .HasColumnType("datetime2");
@@ -119,9 +117,8 @@ namespace TaskManager.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -138,8 +135,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("LastUpdatedDate")
                         .HasColumnType("datetime2");
@@ -171,9 +168,8 @@ namespace TaskManager.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -198,8 +194,8 @@ namespace TaskManager.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("LastUpdatedDate")
                         .HasColumnType("datetime2");
@@ -226,8 +222,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = -1,
-                            CreatedBy = "Seed",
+                            Id = 1,
+                            CreatedById = 1,
                             CreatedDate = new DateTime(2026, 5, 27, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "muhalsukhni@gmail.com",
                             FirstName = "Mohammad",
@@ -248,9 +244,8 @@ namespace TaskManager.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -261,8 +256,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("LastUpdatedDate")
                         .HasColumnType("datetime2");
@@ -297,9 +292,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<int?>("AssignedToUserId")
                         .HasColumnType("int");
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -318,8 +312,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("LastUpdatedDate")
                         .HasColumnType("datetime2");
@@ -362,9 +356,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<int>("ChildWorkItemId")
                         .HasColumnType("int");
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -375,8 +368,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("LastUpdatedDate")
                         .HasColumnType("datetime2");

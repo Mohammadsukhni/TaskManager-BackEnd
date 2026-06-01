@@ -219,8 +219,8 @@ namespace TaskManager.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = -1,
-                            CreatedById = -1,
+                            Id = 1,
+                            CreatedById = 1,
                             CreatedDate = new DateTime(2026, 5, 27, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "muhalsukhni@gmail.com",
                             FirstName = "Mohammad",

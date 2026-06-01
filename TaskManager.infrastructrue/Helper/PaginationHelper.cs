@@ -10,12 +10,10 @@ namespace TaskManager.Infrastructure.Helper
         private const int DefaultPageSize = 10;
         private const int MaxPageSize = 50;
 
-        public static async Task<PagedResultDto<T>> ToPagedResultAsync<T>(IQueryable<T> query,int pageNumber,int pageSize) where T : BaseEntity
+        public static async Task<PagedResultDto<T>> ToPagedResultAsync<T>(IQueryable<T> query, int pageNumber, int pageSize) where T : BaseEntity
         {
             var normalizedPageNumber = pageNumber < 1 ? DefaultPageNumber : pageNumber;
-            var normalizedPageSize = pageSize < 1
-                ? DefaultPageSize
-                : Math.Min(pageSize, MaxPageSize);
+            var normalizedPageSize = pageSize < 1 ? DefaultPageSize : Math.Min(pageSize, MaxPageSize);
 
             var skip = (normalizedPageNumber - 1) * normalizedPageSize;
             var totalCount = await query.CountAsync();

@@ -25,7 +25,7 @@ namespace TaskManager.Infrastructure.Data.Configurations
 
             builder.HasData(new User
             {
-                Id = -1,
+                Id= 1,
                 FirstName = "Mohammad",
                 LastName = "Alsukhni",
                 Email = "muhalsukhni@gmail.com",
@@ -35,7 +35,7 @@ namespace TaskManager.Infrastructure.Data.Configurations
                 IsActive = true,
                 IsDeleted = false,
                 CreatedDate = new DateTime(2026, 5, 27),
-                CreatedById = -1
+                CreatedById = 1
             });
 
         }

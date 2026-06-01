@@ -18,7 +18,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
-        policy.WithOrigins("http://localhost:4200")
+        policy.WithOrigins(
+                  "http://localhost:4200",
+                  "http://127.0.0.1:4200")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -84,7 +86,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors("FrontendPolicy");
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();

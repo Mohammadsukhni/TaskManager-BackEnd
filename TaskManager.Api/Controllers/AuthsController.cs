@@ -50,5 +50,13 @@ namespace TaskManager_p.Controllers
 
             return Ok("Password reset successfully");
         }
+
+        [HttpPost("validate-password-policy")]
+        public async Task<IActionResult> ValidatePasswordPolicy(ValidatePasswordPolicyDto dto)
+        {
+            await _authServices.ValidatePasswordPolicyAsync(dto);
+
+            return Ok("Password policy is valid");
+        }
     }
 }

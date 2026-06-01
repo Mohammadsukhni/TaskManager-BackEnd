@@ -39,7 +39,7 @@ namespace TaskManager.Infrastructure.Service
             if (user == null)
             {
                 _loginAttemptService.RegisterFailedAttempt(dto.Email);
-                throw new BadRequestException("Invalid email or password.");
+                throw new BadRequestException("Email is incorrect.");
             }
 
             await EnsureAdminActiveAsync(user);
@@ -50,7 +50,7 @@ namespace TaskManager.Infrastructure.Service
             if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             {
                 _loginAttemptService.RegisterFailedAttempt(dto.Email);
-                throw new BadRequestException("Invalid email or password.");
+                throw new BadRequestException("Password is incorrect.");
             }
 
             _loginAttemptService.ResetFailedAttempts(dto.Email);
@@ -92,7 +92,7 @@ namespace TaskManager.Infrastructure.Service
             var user = await GetUserByEmailAsync(dto.Email);
 
             if (user == null)
-                return;
+                throw new BadRequestException("Email is incorrect.");
 
             await EnsureAdminActiveAsync(user);
 
@@ -114,7 +114,7 @@ namespace TaskManager.Infrastructure.Service
             var user = await GetUserByEmailAsync(dto.Email);
 
             if (user == null)
-                return;
+                throw new BadRequestException("Email is incorrect.");
 
             await EnsureAdminActiveAsync(user);
 
@@ -124,10 +124,10 @@ namespace TaskManager.Infrastructure.Service
             var otp = await GetValidOtpAsync(user.Id, dto.Otp, OtpActionType.ForgetPassword);
 
             if (otp == null)
-                return;
+                throw new BadRequestException("Invalid OTP.");
 
             if (dto.NewPassword != dto.ConfirmPassword)
-                return;
+                throw new BadRequestException("Passwords do not match.");
 
             PasswordPolicyHelper.Validate(dto.NewPassword);
 
@@ -138,11 +138,19 @@ namespace TaskManager.Infrastructure.Service
             await _unitOfWork.Users.Update(user);
         }
 
+        public Task ValidatePasswordPolicyAsync(ValidatePasswordPolicyDto dto)
+        {
+            PasswordPolicyHelper.Validate(dto.Password);
+
+            return Task.CompletedTask;
+        }
+
         private async Task<User?> GetUserByEmailAsync(string email)
         {
             var users = await _unitOfWork.Users.GetAllAsync();
 
-            return users.FirstOrDefault(x => x.Email == email);
+            return users.FirstOrDefault(x =>
+                string.Equals(x.Email, email.Trim(), StringComparison.OrdinalIgnoreCase));
         }
 
         private async Task EnsureAdminActiveAsync(User user)

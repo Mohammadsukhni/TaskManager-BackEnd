@@ -11,6 +11,7 @@ namespace TaskManager.Core.IService
         Task<AuthResponseDto?> VerifyOtpAsync(VerifyOtpDto dto);
         Task ForgotPasswordAsync(ForgotPasswordDto dto);
         Task ResetPasswordAsync(ResetPasswordDto dto);
+        Task ValidatePasswordPolicyAsync(ValidatePasswordPolicyDto dto);
 
     }
 }
