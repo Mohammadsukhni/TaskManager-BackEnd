@@ -15,7 +15,7 @@ namespace TaskManager.Core.IRepositories
         Task<PagedResultDto<T>> GetPagedAsync(int pageNumber, int pageSize);
         Task<PagedResultDto<T>> GetPagedAsync(Expression<Func<T, bool>> predicate, int pageNumber, int pageSize);
         Task<T?> GetByIdAsync(int id);
-        void Update(T entity);
-        void Delete(T entity);
+        Task Update(T entity);
+        Task Delete(T entity);
     }
 }

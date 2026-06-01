@@ -114,7 +114,7 @@ namespace TaskManager.Infrastructure.Service
             workItem.Type = dto.Type;
             workItem.SprintId = dto.SprintId;
 
-            _unitOfWork.WorkItems.Update(workItem);
+            await _unitOfWork.WorkItems.Update(workItem);
         }
 
         public async Task DeleteWorkItemAsync(int id)
@@ -124,7 +124,7 @@ namespace TaskManager.Infrastructure.Service
             if (workItem == null)
                 return;
 
-            _unitOfWork.WorkItems.Delete(workItem);
+            await _unitOfWork.WorkItems.Delete(workItem);
         }
 
         public async Task AssignWorkItemToUserAsync(int workItemId, int userId)
@@ -158,7 +158,7 @@ namespace TaskManager.Infrastructure.Service
 
             workItem.AssignedToUserId = userId;
 
-            _unitOfWork.WorkItems.Update(workItem);
+            await _unitOfWork.WorkItems.Update(workItem);
             await _emailService.SendEmailAsync( user.Email, "New Work Item Assigned", $@" <h3>New Work Item Assigned To You</h3> <p>Title: {workItem.Title}</p> <p>Description: {workItem.Description}</p> <p>Status: {workItem.Status}</p>");
         }
 
@@ -238,7 +238,7 @@ namespace TaskManager.Infrastructure.Service
 
             workItem.Status = status;
 
-            _unitOfWork.WorkItems.Update(workItem);
+            await _unitOfWork.WorkItems.Update(workItem);
         }
 
         public async Task UpdateAssignedWorkItemAsync(int userId, WorkItemDto dto)
@@ -256,7 +256,7 @@ namespace TaskManager.Infrastructure.Service
             workItem.ActualTime = dto.ActualTime;
             workItem.Status = dto.Status;
 
-            _unitOfWork.WorkItems.Update(workItem);
+            await _unitOfWork.WorkItems.Update(workItem);
         }
 
         private static bool IsSprintEnded(DateTime dateTo)

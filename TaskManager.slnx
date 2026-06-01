@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="TaskManager-p/TaskManager.Api.csproj" />
+    <Project Path="TaskManager.Api/TaskManager.Api.csproj" />
     <Project Path="TaskManager.core/TaskManager.Core.csproj" Id="cb59477e-cb2f-416e-a219-0696c8492e1d" />
     <Project Path="TaskManager.infrastructrue/TaskManager.Infrastructure.csproj" Id="eda0f181-b1bf-4b19-a756-331d8ed03776" />
   </Folder>

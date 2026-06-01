@@ -42,7 +42,7 @@ namespace TaskManager.Infrastructure.Service
                 {
                     workItem.Status = Status.Done;
 
-                    _unitOfWork.WorkItems.Update(workItem);
+                    await _unitOfWork.WorkItems.Update(workItem);
 
                     if (workItem.AssignedToUserId != null)
                     {

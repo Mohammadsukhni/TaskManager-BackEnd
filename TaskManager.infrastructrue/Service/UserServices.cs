@@ -39,7 +39,7 @@ namespace TaskManager.Infrastructure.Service
             if (user == null)
                 return;
 
-            _unitOfWork.Users.Delete(user);
+            await _unitOfWork.Users.Delete(user);
         }
 
         public async Task<PagedResultDto<UserDto>> GetAllUsersAsync(int pageNumber, int pageSize)
@@ -134,7 +134,7 @@ namespace TaskManager.Infrastructure.Service
             user.LastName = dto.LastName;
             user.Phone = dto.Phone;
 
-            _unitOfWork.Users.Update(user);
+            await _unitOfWork.Users.Update(user);
         }
 
         public async Task UpdateUserAsync(UserDto dto)
@@ -154,7 +154,7 @@ namespace TaskManager.Infrastructure.Service
                 user.IsActive = true;
             }
 
-            _unitOfWork.Users.Update(user);
+            await _unitOfWork.Users.Update(user);
         }
 
         public async Task ChangeUserStatusAsync(int userId, bool isActive)
@@ -170,13 +170,13 @@ namespace TaskManager.Infrastructure.Service
                     throw new BadRequestException("Admin is always active.");
 
                 user.IsActive = true;
-                _unitOfWork.Users.Update(user);
+                await _unitOfWork.Users.Update(user);
                 return;
             }
 
             user.IsActive = isActive;
 
-            _unitOfWork.Users.Update(user);
+            await _unitOfWork.Users.Update(user);
         }
 
         private static string NormalizeSearch(string? search)

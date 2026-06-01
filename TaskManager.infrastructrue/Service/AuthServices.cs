@@ -42,7 +42,7 @@ namespace TaskManager.Infrastructure.Service
                 throw new BadRequestException("Invalid email or password.");
             }
 
-            EnsureAdminActive(user);
+            await EnsureAdminActiveAsync(user);
 
             if (!user.IsActive)
                 throw new BadRequestException("This account is deactivated. You cannot login.");
@@ -72,7 +72,7 @@ namespace TaskManager.Infrastructure.Service
             if (user == null)
                 return null;
 
-            EnsureAdminActive(user);
+            await EnsureAdminActiveAsync(user);
 
             if (!user.IsActive)
                 throw new BadRequestException("This account is deactivated. You cannot login.");
@@ -82,7 +82,7 @@ namespace TaskManager.Infrastructure.Service
             if (otp == null)
                 return null;
 
-            _unitOfWork.Otps.Delete(otp);
+            await _unitOfWork.Otps.Delete(otp);
 
             return GenerateJwtToken(user);
         }
@@ -94,7 +94,7 @@ namespace TaskManager.Infrastructure.Service
             if (user == null)
                 return;
 
-            EnsureAdminActive(user);
+            await EnsureAdminActiveAsync(user);
 
             if (!user.IsActive)
                 throw new BadRequestException("This account is deactivated.");
@@ -116,7 +116,7 @@ namespace TaskManager.Infrastructure.Service
             if (user == null)
                 return;
 
-            EnsureAdminActive(user);
+            await EnsureAdminActiveAsync(user);
 
             if (!user.IsActive)
                 throw new BadRequestException("This account is deactivated.");
@@ -134,8 +134,8 @@ namespace TaskManager.Infrastructure.Service
             user.PasswordHash =
                 BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
 
-            _unitOfWork.Otps.Delete(otp);
-            _unitOfWork.Users.Update(user);
+            await _unitOfWork.Otps.Delete(otp);
+            await _unitOfWork.Users.Update(user);
         }
 
         private async Task<User?> GetUserByEmailAsync(string email)
@@ -145,13 +145,13 @@ namespace TaskManager.Infrastructure.Service
             return users.FirstOrDefault(x => x.Email == email);
         }
 
-        private void EnsureAdminActive(User user)
+        private async Task EnsureAdminActiveAsync(User user)
         {
             if (user.UserRole != UserRole.Admin || user.IsActive)
                 return;
 
             user.IsActive = true;
-            _unitOfWork.Users.Update(user);
+            await _unitOfWork.Users.Update(user);
         }
 
         private async Task CreateOtpAsync(int receiverId, string code, OtpActionType actionType)
@@ -188,7 +188,7 @@ namespace TaskManager.Infrastructure.Service
             foreach (var otp in otps.Where(x => x.ReceiverId == receiverId &&
                                                 x.ActionType == actionType))
             {
-                _unitOfWork.Otps.Delete(otp);
+                await _unitOfWork.Otps.Delete(otp);
             }
         }
 

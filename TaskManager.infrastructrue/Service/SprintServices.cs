@@ -125,7 +125,7 @@ namespace TaskManager.Infrastructure.Service
             sprint.DateTo = dto.DateTo;
             sprint.ProjectId = dto.ProjectId;
 
-            _unitOfWork.Sprints.Update(sprint);
+            await _unitOfWork.Sprints.Update(sprint);
         }
 
         public async Task DeleteSprintAsync(int id)
@@ -135,7 +135,7 @@ namespace TaskManager.Infrastructure.Service
             if (sprint == null)
                 return;
 
-            _unitOfWork.Sprints.Delete(sprint);
+            await _unitOfWork.Sprints.Delete(sprint);
         }
 
         public async Task<PagedResultDto<SprintDto>> GetUserSprintsAsync(

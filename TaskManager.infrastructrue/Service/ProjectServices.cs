@@ -91,7 +91,7 @@ namespace TaskManager.Infrastructure.Service
 
             project.Name = dto.Name;
 
-            _unitOfWork.Projects.Update(project);
+            await _unitOfWork.Projects.Update(project);
         }
 
         public async Task DeleteProjectAsync(int id)
@@ -101,7 +101,7 @@ namespace TaskManager.Infrastructure.Service
             if (project == null)
                 return;
 
-            _unitOfWork.Projects.Delete(project);
+            await _unitOfWork.Projects.Delete(project);
         }
 
         public async Task AssignUserToProjectAsync(int projectId, int userId)
