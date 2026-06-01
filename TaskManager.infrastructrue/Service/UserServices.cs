@@ -49,10 +49,7 @@ namespace TaskManager.Infrastructure.Service
             return users.ToPagedDto(x => x.ToDto());
         }
 
-        public async Task<UserFilterResultDto> FilterUsersAsync(
-            string? search,
-            int pageNumber,
-            int pageSize)
+        public async Task<UserFilterResultDto> FilterUsersAsync(string? search, int pageNumber, int pageSize)
         {
             var term = NormalizeSearch(search);
 
