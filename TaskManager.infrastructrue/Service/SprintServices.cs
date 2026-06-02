@@ -1,4 +1,4 @@
-﻿using TaskManager.Core.Dto;
+using TaskManager.Core.Dto;
 using TaskManager.Core.Entities;
 using TaskManager.Core.Exceptions;
 using TaskManager.Core.Helper;
@@ -24,14 +24,7 @@ namespace TaskManager.Infrastructure.Service
             if (project == null)
                 throw new BadRequestException("Project not found.");
 
-            if (dto.DateFrom > dto.DateTo)
-                throw new BadRequestException("Sprint start date cannot be after end date.");
-
-            if (dto.DateFrom.Date < DateTime.Today)
-                throw new BadRequestException("Sprint start date cannot be in the past.");
-
-            if (dto.DateTo.Date < DateTime.Today)
-                throw new BadRequestException("Sprint end date cannot be in the past.");
+            ValidateSprintDates(dto);
 
             var sprint = dto.ToEntity();
 
@@ -55,32 +48,8 @@ namespace TaskManager.Infrastructure.Service
             int pageNumber,
             int pageSize)
         {
-            var term = NormalizeSearch(search);
-
-            PagedResultDto<Sprint> sprints;
-
-            if (string.IsNullOrWhiteSpace(term))
-            {
-                sprints = await _unitOfWork.Sprints.GetPagedAsync(pageNumber, pageSize);
-            }
-            else
-            {
-                var hasDate = DateTime.TryParse(term, out var date);
-
-                sprints = await _unitOfWork.Sprints.GetPagedAsync(
-                    x => x.Name.Contains(term) ||
-                         x.ReferenceNumber.Contains(term) ||
-                         (hasDate && (x.DateFrom.Date == date.Date ||
-                                      x.DateTo.Date == date.Date)),
-                    pageNumber,
-                    pageSize);
-            }
-
-            var sprintIds = sprints.Items.Select(x => x.Id).ToList();
-
-            var workItems = sprintIds.Count == 0
-                ? new List<WorkItem>()
-                : await _unitOfWork.WorkItems.GetAllAsync(x => sprintIds.Contains(x.SprintId));
+            var sprints = await GetFilteredSprintsAsync(search, pageNumber, pageSize);
+            var workItems = await GetSprintWorkItemsAsync(sprints.Items);
 
             return new SprintFilterResultDto
             {
@@ -111,14 +80,7 @@ namespace TaskManager.Infrastructure.Service
             if (project == null)
                 throw new BadRequestException("Project not found.");
 
-            if (dto.DateFrom > dto.DateTo)
-                throw new BadRequestException("Sprint start date cannot be after end date.");
-
-            if (dto.DateFrom.Date < DateTime.Today)
-                throw new BadRequestException("Sprint start date cannot be in the past.");
-
-            if (dto.DateTo.Date < DateTime.Today)
-                throw new BadRequestException("Sprint end date cannot be in the past.");
+            ValidateSprintDates(dto);
 
             sprint.Name = dto.Name;
             sprint.DateFrom = dto.DateFrom;
@@ -143,12 +105,8 @@ namespace TaskManager.Infrastructure.Service
             int pageNumber,
             int pageSize)
         {
-            var userProjects = await _unitOfWork.UserProjects.GetAllAsync();
-
-            var projectIds = userProjects
-                .Where(x => x.UserId == userId)
-                .Select(x => x.ProjectId)
-                .ToList();
+            var userProjects = await _unitOfWork.UserProjects.GetAllAsync(x => x.UserId == userId);
+            var projectIds = userProjects.Select(x => x.ProjectId).ToList();
 
             var sprints = await _unitOfWork.Sprints.GetPagedAsync(
                 x => projectIds.Contains(x.ProjectId),
@@ -156,6 +114,48 @@ namespace TaskManager.Infrastructure.Service
                 pageSize);
 
             return sprints.ToPagedDto(x => x.ToDto());
+        }
+
+        private async Task<PagedResultDto<Sprint>> GetFilteredSprintsAsync(
+            string? search,
+            int pageNumber,
+            int pageSize)
+        {
+            var term = NormalizeSearch(search);
+
+            if (string.IsNullOrWhiteSpace(term))
+                return await _unitOfWork.Sprints.GetPagedAsync(pageNumber, pageSize);
+
+            var hasDate = DateTime.TryParse(term, out var date);
+
+            return await _unitOfWork.Sprints.GetPagedAsync(
+                x => x.Name.Contains(term) ||
+                     x.ReferenceNumber.Contains(term) ||
+                     (hasDate && (x.DateFrom.Date == date.Date ||
+                                  x.DateTo.Date == date.Date)),
+                pageNumber,
+                pageSize);
+        }
+
+        private async Task<IReadOnlyList<WorkItem>> GetSprintWorkItemsAsync(IReadOnlyList<Sprint> sprints)
+        {
+            var sprintIds = sprints.Select(x => x.Id).ToList();
+
+            return sprintIds.Count == 0
+                ? new List<WorkItem>()
+                : await _unitOfWork.WorkItems.GetAllAsync(x => sprintIds.Contains(x.SprintId));
+        }
+
+        private static void ValidateSprintDates(SprintDto dto)
+        {
+            if (dto.DateFrom > dto.DateTo)
+                throw new BadRequestException("Sprint start date cannot be after end date.");
+
+            if (dto.DateFrom.Date < DateTime.Today)
+                throw new BadRequestException("Sprint start date cannot be in the past.");
+
+            if (dto.DateTo.Date < DateTime.Today)
+                throw new BadRequestException("Sprint end date cannot be in the past.");
         }
 
         private static string NormalizeSearch(string? search)

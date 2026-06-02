@@ -1,6 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using TaskManager.Core.Dto;
 
 namespace TaskManager.Core.IService
@@ -12,6 +9,5 @@ namespace TaskManager.Core.IService
         Task ForgotPasswordAsync(ForgotPasswordDto dto);
         Task ResetPasswordAsync(ResetPasswordDto dto);
         Task ValidatePasswordPolicyAsync(ValidatePasswordPolicyDto dto);
-
     }
 }

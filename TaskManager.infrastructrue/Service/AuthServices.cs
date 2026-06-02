@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -22,7 +22,11 @@ namespace TaskManager.Infrastructure.Service
         private readonly IEmailService _emailService;
         private readonly ILoginAttemptService _loginAttemptService;
 
-        public AuthServices(IUnitOfWork unitOfWork, IConfiguration configuration, IEmailService emailService, ILoginAttemptService loginAttemptService)
+        public AuthServices(
+            IUnitOfWork unitOfWork,
+            IConfiguration configuration,
+            IEmailService emailService,
+            ILoginAttemptService loginAttemptService)
         {
             _unitOfWork = unitOfWork;
             _configuration = configuration;
@@ -58,11 +62,7 @@ namespace TaskManager.Infrastructure.Service
             var otpCode = OtpHelper.GenerateOtp();
 
             await CreateOtpAsync(user.Id, otpCode, OtpActionType.Login);
-
-            await _emailService.SendEmailAsync(
-                user.Email,
-                "Task Manager OTP",
-                $"<h3>Your OTP Code is: {otpCode}</h3>");
+            await SendLoginOtpAsync(user.Email, otpCode);
         }
 
         public async Task<AuthResponseDto?> VerifyOtpAsync(VerifyOtpDto dto)
@@ -102,11 +102,7 @@ namespace TaskManager.Infrastructure.Service
             var otpCode = OtpHelper.GenerateOtp();
 
             await CreateOtpAsync(user.Id, otpCode, OtpActionType.ForgetPassword);
-
-            await _emailService.SendEmailAsync(
-                user.Email,
-                "Reset Password OTP",
-                $"<h3>Your Reset Password OTP is: {otpCode}</h3>");
+            await SendResetPasswordOtpAsync(user.Email, otpCode);
         }
 
         public async Task ResetPasswordAsync(ResetPasswordDto dto)
@@ -147,10 +143,12 @@ namespace TaskManager.Infrastructure.Service
 
         private async Task<User?> GetUserByEmailAsync(string email)
         {
-            var users = await _unitOfWork.Users.GetAllAsync();
+            var trimmedEmail = email.Trim();
+            var normalizedEmail = trimmedEmail.ToLower();
+            var users = await _unitOfWork.Users.GetAllAsync(x => x.Email.ToLower() == normalizedEmail);
 
             return users.FirstOrDefault(x =>
-                string.Equals(x.Email, email.Trim(), StringComparison.OrdinalIgnoreCase));
+                string.Equals(x.Email, trimmedEmail, StringComparison.OrdinalIgnoreCase));
         }
 
         private async Task EnsureAdminActiveAsync(User user)
@@ -178,26 +176,43 @@ namespace TaskManager.Infrastructure.Service
 
         private async Task<Otp?> GetValidOtpAsync(int receiverId, string code, OtpActionType actionType)
         {
-            var otps = await _unitOfWork.Otps.GetAllAsync();
+            var otps = await _unitOfWork.Otps.GetAllAsync(
+                x => x.ReceiverId == receiverId &&
+                     x.ActionType == actionType &&
+                     x.Code == code);
 
             return otps
-                .Where(x => x.ReceiverId == receiverId &&
-                            x.ActionType == actionType &&
-                            x.Code == code &&
-                            x.CreatedDate.AddMinutes(OtpLifetimeInMinutes) >= DateTime.Now)
+                .Where(x => x.CreatedDate.AddMinutes(OtpLifetimeInMinutes) >= DateTime.Now)
                 .OrderByDescending(x => x.CreatedDate)
                 .FirstOrDefault();
         }
 
         private async Task DeleteExistingOtpsAsync(int receiverId, OtpActionType actionType)
         {
-            var otps = await _unitOfWork.Otps.GetAllAsync();
+            var otps = await _unitOfWork.Otps.GetAllAsync(
+                x => x.ReceiverId == receiverId &&
+                     x.ActionType == actionType);
 
-            foreach (var otp in otps.Where(x => x.ReceiverId == receiverId &&
-                                                x.ActionType == actionType))
+            foreach (var otp in otps)
             {
                 await _unitOfWork.Otps.Delete(otp);
             }
+        }
+
+        private async Task SendLoginOtpAsync(string email, string otpCode)
+        {
+            await _emailService.SendEmailAsync(
+                email,
+                "Task Manager OTP",
+                $"<h3>Your OTP Code is: {otpCode}</h3>");
+        }
+
+        private async Task SendResetPasswordOtpAsync(string email, string otpCode)
+        {
+            await _emailService.SendEmailAsync(
+                email,
+                "Reset Password OTP",
+                $"<h3>Your Reset Password OTP is: {otpCode}</h3>");
         }
 
         private AuthResponseDto GenerateJwtToken(User user)

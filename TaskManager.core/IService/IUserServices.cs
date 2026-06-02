@@ -1,18 +1,21 @@
-﻿using TaskManager.Core.Dto;
+using TaskManager.Core.Dto;
 
-public interface IUserService
+namespace TaskManager.Core.IService
 {
-    Task<PagedResultDto<UserDto>> GetAllUsersAsync(int pageNumber, int pageSize);
-    Task<UserFilterResultDto> FilterUsersAsync(string? search, int pageNumber, int pageSize);
+    public interface IUserService
+    {
+        Task<PagedResultDto<UserDto>> GetAllUsersAsync(int pageNumber, int pageSize);
+        Task<UserFilterResultDto> FilterUsersAsync(string? search, int pageNumber, int pageSize);
 
-    Task<UserDto?> GetUserByIdAsync(int id);
+        Task<UserDto?> GetUserByIdAsync(int id);
 
-    Task CreateUserAsync(UserDto dto);
+        Task CreateUserAsync(UserDto dto);
 
-    Task UpdateUserAsync(UserDto dto); // Admin
+        Task UpdateUserAsync(UserDto dto);
 
-    Task UpdateOwnAccountAsync(int userId, UserDto dto); // User
-    Task ChangeUserStatusAsync(int userId, bool isActive);
+        Task UpdateOwnAccountAsync(int userId, UserDto dto);
+        Task ChangeUserStatusAsync(int userId, bool isActive);
 
-    Task DeleteUserAsync(int id);
+        Task DeleteUserAsync(int id);
+    }
 }

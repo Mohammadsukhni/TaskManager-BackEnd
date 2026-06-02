@@ -1,13 +1,11 @@
-﻿using System;
+using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using TaskManager.Core.Dto;
 using TaskManager.Core.Entities;
 using TaskManager.Core.IRepositories;
 using TaskManager.Core.IService;
 using TaskManager.Infrastructure.Data;
 using TaskManager.Infrastructure.Helper;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
-
 
 namespace TaskManager.Infrastructure.Repositories
 {
@@ -30,6 +28,41 @@ namespace TaskManager.Infrastructure.Repositories
             await _context.Set<T>().AddAsync(entity);
         }
 
+        public async Task<IReadOnlyList<T>> GetAllAsync()
+        {
+            return await QueryableSet().ToListAsync();
+        }
+
+        public async Task<IReadOnlyList<T>> GetAllAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await QueryableSet().Where(predicate).ToListAsync();
+        }
+
+        public async Task<PagedResultDto<T>> GetPagedAsync(int pageNumber, int pageSize)
+        {
+            return await PaginationHelper.ToPagedResultAsync(QueryableSet(), pageNumber, pageSize);
+        }
+
+        public async Task<PagedResultDto<T>> GetPagedAsync(Expression<Func<T, bool>> predicate, int pageNumber, int pageSize)
+        {
+            return await PaginationHelper.ToPagedResultAsync(QueryableSet().Where(predicate), pageNumber, pageSize);
+        }
+
+        public async Task<T?> GetByIdAsync(int id)
+        {
+            return await QueryableSet().FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public Task Update(T entity)
+        {
+            entity.LastUpdatedDate = DateTime.Now;
+            entity.LastUpdatedById = _currentUserService.GetAuditUserId();
+
+            _context.Set<T>().Update(entity);
+
+            return Task.CompletedTask;
+        }
+
         public Task Delete(T entity)
         {
             entity.IsDeleted = true;
@@ -41,48 +74,9 @@ namespace TaskManager.Infrastructure.Repositories
             return Task.CompletedTask;
         }
 
-        public async Task<IReadOnlyList<T>> GetAllAsync()
+        private IQueryable<T> QueryableSet()
         {
-            return await _context.Set<T>().ToListAsync();
-        }
-
-        public async Task<IReadOnlyList<T>> GetAllAsync(Expression<Func<T, bool>> predicate)
-        {
-            return await _context.Set<T>().Where(predicate).ToListAsync();
-        }
-
-        public async Task<PagedResultDto<T>> GetPagedAsync(int pageNumber, int pageSize)
-        {
-            return await PaginationHelper.ToPagedResultAsync(
-                _context.Set<T>(),
-                pageNumber,
-                pageSize);
-        }
-
-        public async Task<PagedResultDto<T>> GetPagedAsync(
-            Expression<Func<T, bool>> predicate,
-            int pageNumber,
-            int pageSize)
-        {
-            return await PaginationHelper.ToPagedResultAsync(
-                _context.Set<T>().Where(predicate),
-                pageNumber,
-                pageSize);
-        }
-
-        public async Task<T?> GetByIdAsync(int id)
-        {
-            return await _context.Set<T>().FirstOrDefaultAsync(x => x.Id == id);
-        }
-
-        public Task Update(T entity)
-        {
-            entity.LastUpdatedDate = DateTime.Now;
-            entity.LastUpdatedById = _currentUserService.GetAuditUserId();
-
-            _context.Set<T>().Update(entity);
-
-            return Task.CompletedTask;
+            return _context.Set<T>().Where(x => !x.IsDeleted);
         }
     }
 }

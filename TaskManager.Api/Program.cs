@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using TaskManager.Core.Exceptions;
+using TaskManager.Core.IRepositories;
 using TaskManager.Core.IService;
 using TaskManager.Infrastructure.Data;
 using TaskManager.Infrastructure.Repositories;

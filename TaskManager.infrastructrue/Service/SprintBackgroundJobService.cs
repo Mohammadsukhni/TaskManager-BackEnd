@@ -1,4 +1,5 @@
-﻿using TaskManager.Core.Enum;
+using TaskManager.Core.Entities;
+using TaskManager.Core.Enum;
 using TaskManager.Core.IRepositories;
 using TaskManager.Core.IService;
 
@@ -24,39 +25,64 @@ namespace TaskManager.Infrastructure.Service
                 .Date
                 .AddDays(-1);
 
-            var sprints = await _unitOfWork.Sprints.GetAllAsync();
-
-            var endedSprints = sprints
-                .Where(x => x.DateTo.Date == yesterday)
-                .ToList();
+            var endedSprints = await _unitOfWork.Sprints.GetAllAsync(x => x.DateTo.Date == yesterday);
 
             foreach (var sprint in endedSprints)
             {
-                var workItems = await _unitOfWork.WorkItems.GetAllAsync();
-
-                var sprintWorkItems = workItems
-                    .Where(x => x.SprintId == sprint.Id)
-                    .ToList();
-
-                foreach (var workItem in sprintWorkItems)
-                {
-                    workItem.Status = Status.Done;
-
-                    await _unitOfWork.WorkItems.Update(workItem);
-
-                    if (workItem.AssignedToUserId != null)
-                    {
-                        var user = await _unitOfWork.Users.GetByIdAsync(workItem.AssignedToUserId.Value);
-
-                        if (user != null)
-                        {
-                            await _emailService.SendEmailAsync(user.Email, "Sprint Ended", $"<h3>Sprint {sprint.Name} has ended.</h3><p>Your task '{workItem.Title}' was closed.</p>");
-                        }
-                    }
-                }
+                await CloseSprintWorkItemsAsync(sprint);
             }
 
             await _unitOfWork.SaveChangesAsync();
+        }
+
+        private async Task CloseSprintWorkItemsAsync(Sprint sprint)
+        {
+            var workItems = await _unitOfWork.WorkItems.GetAllAsync(x => x.SprintId == sprint.Id);
+            var usersById = await GetAssignedUsersByIdAsync(workItems);
+
+            foreach (var workItem in workItems)
+            {
+                workItem.Status = Status.Done;
+
+                await _unitOfWork.WorkItems.Update(workItem);
+                await NotifyAssignedUserAsync(sprint, workItem, usersById);
+            }
+        }
+
+        private async Task<IReadOnlyDictionary<int, User>> GetAssignedUsersByIdAsync(
+            IReadOnlyList<WorkItem> workItems)
+        {
+            var userIds = workItems
+                .Where(x => x.AssignedToUserId.HasValue)
+                .Select(x => x.AssignedToUserId!.Value)
+                .Distinct()
+                .ToList();
+
+            if (userIds.Count == 0)
+                return new Dictionary<int, User>();
+
+            var users = await _unitOfWork.Users.GetAllAsync(x => userIds.Contains(x.Id));
+
+            return users.ToDictionary(x => x.Id);
+        }
+
+        private async Task NotifyAssignedUserAsync(
+            Sprint sprint,
+            WorkItem workItem,
+            IReadOnlyDictionary<int, User> usersById)
+        {
+            if (!workItem.AssignedToUserId.HasValue)
+                return;
+
+            if (!usersById.TryGetValue(workItem.AssignedToUserId.Value, out var user))
+                return;
+
+            var body = $"""
+                <h3>Sprint {sprint.Name} has ended.</h3>
+                <p>Your task '{workItem.Title}' was closed.</p>
+                """;
+
+            await _emailService.SendEmailAsync(user.Email, "Sprint Ended", body);
         }
 
         private static TimeZoneInfo GetJordanTimeZone()

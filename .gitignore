@@ -9,6 +9,7 @@ obj/
 *.user
 *.suo
 *.tmp
+*.log
 
 # Local configuration and secrets
 **/appsettings.Development.json
@@ -20,3 +21,6 @@ obj/
 
 # Generated checks/artifacts
 buildcheck/
+.build-check/
+verify-build/
+verify-build-temp/

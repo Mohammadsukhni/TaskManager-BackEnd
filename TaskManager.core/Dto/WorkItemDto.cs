@@ -1,6 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using TaskManager.Core.Enum;
 
 namespace TaskManager.Core.Dto
@@ -30,5 +27,20 @@ namespace TaskManager.Core.Dto
         public int? CreatedById { get; set; }
 
         public int? LastUpdatedById { get; set; }
+
+        public List<WorkItemChildDto> Children { get; set; } = new();
+    }
+
+    public class WorkItemChildDto
+    {
+        public int Id { get; set; }
+
+        public string Title { get; set; } = string.Empty;
+
+        public Status Status { get; set; }
+
+        public WorkItemType Type { get; set; }
+
+        public string ReferenceNumber { get; set; } = string.Empty;
     }
 }

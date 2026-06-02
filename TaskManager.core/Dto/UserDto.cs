@@ -1,6 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using TaskManager.Core.Enum;
 
 namespace TaskManager.Core.Dto
@@ -15,6 +12,7 @@ namespace TaskManager.Core.Dto
         public string Password { get; set; } = string.Empty;
         public UserRole UserRole { get; set; }
         public bool IsActive { get; set; } = true;
+        public DateTime CreatedDate { get; set; }
         public int? CreatedById { get; set; }
         public int? LastUpdatedById { get; set; }
     }

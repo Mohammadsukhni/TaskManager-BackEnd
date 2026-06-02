@@ -119,10 +119,7 @@ namespace TaskManager_p.Controllers
             int pageSize = 10)
         {
             var workItems =
-                await _workItemServices.GetUserWorkItemsAsync(
-                    CurrentUserId,
-                    pageNumber,
-                    pageSize);
+                await _workItemServices.GetUserWorkItemsAsync(CurrentUserId, pageNumber, pageSize);
 
             return Ok(workItems);
         }

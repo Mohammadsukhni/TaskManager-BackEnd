@@ -18,6 +18,7 @@ namespace TaskManager.Core.Mapping
                 Phone = user.Phone,
                 UserRole = user.UserRole,
                 IsActive = user.IsActive,
+                CreatedDate = user.CreatedDate,
                 CreatedById = user.CreatedById,
                 LastUpdatedById = user.LastUpdatedById
             };

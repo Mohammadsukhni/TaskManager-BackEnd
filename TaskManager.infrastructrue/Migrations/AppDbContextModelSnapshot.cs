@@ -214,6 +214,9 @@ namespace TaskManager.Infrastructure.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
+                    b.HasIndex("Phone")
+                        .IsUnique();
+
                     b.ToTable("Users");
 
                     b.HasData(

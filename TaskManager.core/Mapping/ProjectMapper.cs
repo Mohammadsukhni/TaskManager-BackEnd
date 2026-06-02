@@ -1,4 +1,4 @@
-﻿using TaskManager.Core.Dto;
+using TaskManager.Core.Dto;
 using TaskManager.Core.Entities;
 
 namespace TaskManager.Core.Mapping
@@ -26,7 +26,7 @@ namespace TaskManager.Core.Mapping
             return new Project
             {
                 Id = dto.Id,
-                Name = dto.Name    
+                Name = dto.Name
             };
         }
     }

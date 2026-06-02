@@ -1,6 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using TaskManager.Core.Entities;
 using TaskManager.Core.IRepositories;
 using TaskManager.Core.IService;
@@ -11,20 +8,18 @@ namespace TaskManager.Infrastructure.Repositories
     public class UnitOfWork : IUnitOfWork
     {
         private readonly AppDbContext _context;
-        private readonly ICurrentUserService _currentUserService;
 
         public UnitOfWork(AppDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
-            _currentUserService = currentUserService;
 
-            Users = new GenericRepository<User>(_context, _currentUserService);
-            Projects = new GenericRepository<Project>(_context, _currentUserService);
-            UserProjects = new GenericRepository<UserProject>(_context, _currentUserService);
-            Sprints = new GenericRepository<Sprint>(_context, _currentUserService);
-            WorkItems = new GenericRepository<WorkItem>(_context, _currentUserService);
-            WorkItemRelations = new GenericRepository<WorkItemRelation>(_context, _currentUserService);
-            Otps = new GenericRepository<Otp>(_context, _currentUserService);
+            Users = new GenericRepository<User>(_context, currentUserService);
+            Projects = new GenericRepository<Project>(_context, currentUserService);
+            UserProjects = new GenericRepository<UserProject>(_context, currentUserService);
+            Sprints = new GenericRepository<Sprint>(_context, currentUserService);
+            WorkItems = new GenericRepository<WorkItem>(_context, currentUserService);
+            WorkItemRelations = new GenericRepository<WorkItemRelation>(_context, currentUserService);
+            Otps = new GenericRepository<Otp>(_context, currentUserService);
         }
 
         public IGenericRepository<User> Users { get; }

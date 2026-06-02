@@ -19,6 +19,7 @@ namespace TaskManager.Infrastructure.Data.Configurations
             builder.Property(u => u.Email).IsRequired();
             builder.HasIndex(u => u.Email).IsUnique();
             builder.Property(u => u.Phone).HasMaxLength(20).IsRequired();
+            builder.HasIndex(u => u.Phone).IsUnique();
             builder.Property(u => u.PasswordHash).IsRequired();
             builder.Property(u => u.UserRole).IsRequired();
             builder.HasQueryFilter(x => !x.IsDeleted);
